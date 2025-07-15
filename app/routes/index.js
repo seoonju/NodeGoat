@@ -7,6 +7,7 @@ const MemosHandler = require("./memos");
 const ResearchHandler = require("./research");
 const tutorialRouter = require("./tutorial");
 const ErrorHandler = require("./error").errorHandler;
+const rateLimit = require("express-rate-limit");
 
 const index = (app, db) => {
 
@@ -26,19 +27,25 @@ const index = (app, db) => {
     //Middleware to check if user has admin rights
     const isAdmin = sessionHandler.isAdminUserMiddleware;
 
+    // Rate limiting middleware
+    const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100 // limit each IP to 100 requests per windowMs
+    });
+
     // The main page of the app
     app.get("/", sessionHandler.displayWelcomePage);
 
     // Login form
-    app.get("/login", sessionHandler.displayLoginPage);
-    app.post("/login", sessionHandler.handleLoginRequest);
+    app.get("/login", limiter, sessionHandler.displayLoginPage);
+    app.post("/login", limiter, sessionHandler.handleLoginRequest);
 
     // Signup form
-    app.get("/signup", sessionHandler.displaySignupPage);
-    app.post("/signup", sessionHandler.handleSignup);
+    app.get("/signup", limiter, sessionHandler.displaySignupPage);
+    app.post("/signup", limiter, sessionHandler.handleSignup);
 
     // Logout page
-    app.get("/logout", sessionHandler.displayLogoutPage);
+    app.get("/logout", limiter, sessionHandler.displayLogoutPage);
 
     // The main page of the app
     app.get("/dashboard", isLoggedIn, sessionHandler.displayWelcomePage);
@@ -68,8 +75,13 @@ const index = (app, db) => {
 
     // Handle redirect for learning resources link
     app.get("/learn", isLoggedIn, (req, res) => {
-        // Insecure way to handle redirects by taking redirect url from query string
-        return res.redirect(req.query.url);
+        const validUrls = ["https://trusted.com/resource1", "https://trusted.com/resource2"];
+        const redirectUrl = req.query.url;
+        if (validUrls.includes(redirectUrl)) {
+            return res.redirect(redirectUrl);
+        } else {
+            return res.status(400).send("Invalid redirect URL");
+        }
     });
 
     // Research Page

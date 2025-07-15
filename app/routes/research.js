@@ -12,7 +12,17 @@ function ResearchHandler(db) {
     this.displayResearch = (req, res) => {
 
         if (req.query.symbol) {
+            const trustedDomains = ["https://api.trustedsource.com", "https://another.trustedsource.com"];
             const url = req.query.url + req.query.symbol;
+            const isTrusted = trustedDomains.some(domain => url.startsWith(domain));
+            
+            if (!isTrusted) {
+                res.writeHead(400, {
+                    "Content-Type": "text/html"
+                });
+                return res.end("Invalid URL");
+            }
+
             return needle.get(url, (error, newResponse, body) => {
                 if (!error && newResponse.statusCode === 200) {
                     res.writeHead(200, {

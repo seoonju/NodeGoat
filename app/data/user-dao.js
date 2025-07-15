@@ -88,6 +88,11 @@ function UserDAO(db) {
             }
         };
 
+        // Validate and sanitize userName input
+        if (typeof userName !== 'string' || userName.trim() === '') {
+            return callback(new Error("Invalid userName"), null);
+        }
+
         usersCol.findOne({
             userName: userName
         }, validateUserDoc);
