@@ -12,7 +12,15 @@ function ResearchHandler(db) {
     this.displayResearch = (req, res) => {
 
         if (req.query.symbol) {
-            const url = req.query.url + req.query.symbol;
+            const allowedDomains = ["https://api.stockinfo.com", "https://api.finance.com"];
+            const baseUrl = req.query.url;
+            const isAllowed = allowedDomains.some(domain => baseUrl.startsWith(domain));
+
+            if (!isAllowed) {
+                return res.status(400).send("Invalid URL");
+            }
+
+            const url = baseUrl + req.query.symbol;
             return needle.get(url, (error, newResponse, body) => {
                 if (!error && newResponse.statusCode === 200) {
                     res.writeHead(200, {
