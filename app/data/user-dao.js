@@ -88,6 +88,11 @@ function UserDAO(db) {
             }
         };
 
+        // Ensure userName is a string to prevent injection attacks
+        if (typeof userName !== 'string') {
+            return callback(new Error("Invalid input type"), null);
+        }
+
         usersCol.findOne({
             userName: userName
         }, validateUserDoc);
