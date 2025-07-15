@@ -68,8 +68,13 @@ const index = (app, db) => {
 
     // Handle redirect for learning resources link
     app.get("/learn", isLoggedIn, (req, res) => {
-        // Insecure way to handle redirects by taking redirect url from query string
-        return res.redirect(req.query.url);
+        const allowedDomains = ['example.com', 'trusted.com']; // 허용된 도메인 목록
+        const url = new URL(req.query.url);
+        if (allowedDomains.includes(url.hostname)) {
+            return res.redirect(req.query.url);
+        } else {
+            return res.status(400).send('Invalid redirect URL');
+        }
     });
 
     // Research Page
